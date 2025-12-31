@@ -53,13 +53,23 @@ pipeline {
         steps {
             withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
                 sh '''
-                    git config user.email "limphanith.dev@gmail.com"
-                    git config user.name "mlue-jenkin"
-                    BUILD_NUMBER=${BUILD_NUMBER}
-                    sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" ./deployment.yml
+                    set -e
+    
+                    git config --global user.email "limphanith.dev@gmail.com"
+                    git config --global user.name "mlue-jenkin"
+    
+                    # Clone manifests repo
+                    rm -rf ${GIT_REPO_NAME}
+                    git clone https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git
+    
+                    cd ${GIT_REPO_NAME}
+    
+                    echo "Updating deployment.yml with BUILD_NUMBER=${BUILD_NUMBER}"
+                    sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" deployment.yml
+    
                     git add deployment.yml
                     git commit -m "Update deployment image to version ${BUILD_NUMBER}"
-                    git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
+                    git push origin main
                 '''
             }
         }
